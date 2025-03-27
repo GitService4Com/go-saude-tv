@@ -5,6 +5,7 @@
 # import os
 # import datetime
 # import warnings
+# import time
 
 # warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -39,7 +40,7 @@
 #     try:
 #         return f"{simbolo_moeda} {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 #     except (TypeError, ValueError):
-#         return "Valor inválido" #Tratamento de erro, para caso o valor não possa ser convertido para float.
+#         return "Valor inválido"
 
 # def calcular_metricas(df):
 #     """Calcula métricas de vendas."""
@@ -66,57 +67,143 @@
 #     df_clientes['Cliente'] = df_clientes['Cliente'].str[:max_len]
 #     return df_clientes
 
-# def produtos_mais_vendidos(df, top_n=10, ordenar_por='Valor_Total_Item', max_len=20):
+# def produtos_mais_vendidos(df, top_n=10, ordenar_por='Valor_Total_Item', max_len=30):
 #     df_agrupado = df.groupby('Descricao_produto')[ordenar_por].sum().reset_index()
 #     df_ordenado = df_agrupado.sort_values(by=ordenar_por, ascending=False)
 #     df_ordenado['Descricao_produto'] = df_ordenado['Descricao_produto'].str[:max_len]
 #     return df_ordenado.head(top_n)
-
 # def criar_grafico_barras(df, x, y, title, labels):
-#     """Cria um gráfico de barras."""
-#     df['Valor_Monetario'] = df[y].apply(formatar_moeda)
-#     fig = px.bar(df, x=x, y=y, title=title, labels=labels, 
-#                  color=y, text=df['Valor_Monetario'], template="plotly_white", 
-#                  hover_data={x: False, y: False, 'Valor_Monetario': True})
-#     fig.update_traces(marker=dict(line=dict(color='black', width=1)), 
-#                       hoverlabel=dict(bgcolor="black", font_size=22, 
-#                                       font_family="Arial, sans-serif"))
-#     fig.update_layout(yaxis_title=labels.get(y, y), 
-#                       xaxis_title=labels.get(x, x),
-#                       showlegend=False, height=400)
-    
+#     df = df.sort_values(by=y, ascending=False) 
+#     df = df.iloc[::-1]
+#     df['Valor_Monetario'] = df[y].apply(lambda valor: f'R$ {valor:,.2f}'.replace(',', '.'))
+#     fig = px.bar(df, x=y, y=x,
+#                  title=title,
+#                  labels={labels.get(y, y): labels.get(x, x), labels.get(x, x): labels.get(y, y)},
+#                  color=y,
+#                  text=df['Valor_Monetario'],
+#                  template="ggplot2",
+#                  hover_data={y: False, x: False, 'Valor_Monetario': True},
+#                  orientation='h')
+#     fig.update_traces(
+#         marker=dict(line=dict(color='black', width=1)),
+#         hoverlabel=dict(bgcolor="black", font_size=22, font_family="Arial, sans-serif"),
+#         textfont=dict(size=28, color='white'),
+#         textangle=0,
+#         textposition='inside'
+#     )
+#     fig.update_layout(
+#         yaxis_title=labels.get(x, x),
+#         xaxis_title=labels.get(y, y),
+#         showlegend=False,
+#         height=850,
+#         width=400,
+#         xaxis=dict(tickfont=dict(size=18)),
+#         yaxis=dict(
+#             title=dict(
+#                 text=labels.get(x, x),
+#                 font=dict(size=18)
+#             ),
+#             tickfont=dict(size=16),
+#         ),
+#         title_font=dict(size=40, family="Times New Roman"),
+#         margin=dict(l=10, r=10)
+#     )
 #     return fig
 
+
 # def criar_grafico_vendas_diarias(df, mes, ano):
-#     """Cria um gráfico de vendas diárias."""
 #     df_filtrado = df[(df['Mes'] == mes) & (df['Ano'] == ano)]
 #     vendas_diarias = df_filtrado.groupby('Dia')['Valor_Total_Item'].sum().reset_index()
 #     vendas_diarias["Valor_Monetario"] = vendas_diarias["Valor_Total_Item"].apply(formatar_moeda)
-#     fig = px.bar(vendas_diarias, x='Dia', y='Valor_Total_Item',
-#                  title=f'Vendas Diárias em {mes}/{ano}',
-#                  labels={'Dia': 'Dia', 'Valor_Total_Item': 'Valor Total de Venda'},
-#                  color='Valor_Total_Item', text=vendas_diarias["Valor_Monetario"],
-#                  template="plotly_white", hover_data={'Valor_Total_Item': False,'Valor_Monetario': True})
-#     fig.update_traces(marker=dict(line=dict(color='black', width=1)),
-#                       hoverlabel=dict(bgcolor="black", font_size=22,
-#                                       font_family="Arial-bold, sans-serif"))
+#     fig = px.bar(
+#         vendas_diarias, x='Dia', y='Valor_Total_Item',
+#         title=f'Vendas Diárias em {mes}/{ano}',
+#         labels={'Dia': 'Dia', 'Valor_Total_Item': 'Valor Total de Venda'},
+#         color='Valor_Total_Item',
+#         text=vendas_diarias["Valor_Monetario"],
+#         template="plotly_white", hover_data={'Valor_Total_Item': False,'Valor_Monetario': True})
+#     fig.update_traces(
+#         marker=dict(line=dict(color='black', width=1)),
+#         hoverlabel=dict(bgcolor="black", font_size=22,
+#             font_family="Arial-bold, sans-serif"), 
+#             textfont=dict(size=16, color='black'),
+#             textangle=0, textposition='outside')
 #     fig.update_layout(yaxis_title='Valor Total de Venda',
-#                       xaxis_title='Dia',
-#                       showlegend=False, height=400)
+#         xaxis_title='Dia',
+#         showlegend=False, height=600, 
+#         xaxis=dict(tickfont=dict(size=18)),
+#         yaxis=dict(
+#             title=dict(
+#                 text='Valor Total de Venda',
+#                 font=dict(size=14)
+#             ),
+#             tickfont=dict(size=12)
+#         ),
+#         title_font=dict(size=40, family="Times New Roman")
+#     )
+#     return fig
+
+
+# def exibir_grafico_ticket_medio(df_ticket_medio):
+#     df_ticket_medio['Ticket Medio'] = df_ticket_medio['Ticket_Medio'].apply(formatar_moeda)
+#     fig = px.bar(
+#         df_ticket_medio,
+#         x="Vendedor",
+#         y="Ticket_Medio",
+#         color="Semana",
+#         barmode="group",
+#         title="Ticket Médio por Vendedor e Semana",
+#         labels={"Ticket_Medio": "Ticket Médio", "Vendedor": "Vendedor", "Semana": "Semana"},
+#         text=df_ticket_medio["Ticket Medio"],
+#         template="plotly_dark",
+#         hover_data={"Vendedor": False, "Ticket_Medio": False, 'Ticket Medio': True}
+#     )
+#     fig.update_traces(
+#         marker=dict(line=dict(color='black', width=1)),
+#         hoverlabel=dict(bgcolor="black", font_size=22, font_family="Arial, sans-serif"),
+#         textfont=dict(size=32, color='#000000'),
+#         textposition='outside',
+#         cliponaxis=False
+#     )
+        
+#     fig.update_layout(
+#         yaxis_title="Ticket Médio",
+#         xaxis_title="Vendedor",
+#         showlegend=True,
+#         height=800,
+#         xaxis=dict(tickfont=dict(size=18)),
+#         yaxis=dict(
+#             title=dict(
+#                 text="Ticket Médio",
+#                 font=dict(size=18)
+#             ),
+#             tickfont=dict(size=16),
+#         ),
+#         title_font=dict(size=40, family="Times New Roman"),
+#         legend=dict(
+#             title="Semanas",
+#             orientation="v",
+#             yanchor="top",
+#             y=1,
+#             xanchor="left",
+#             x=1,
+#             font=dict(
+#                 size=14,  
+#                 family="Arial, sans-serif",  
+#                 color="white",
+#             )
+#         ),
+#         bargap=0.1
+#     )
 #     return fig
 
 # def aplicar_filtros(df, vendedor='Todos', mes=None, ano=None, situacao='Faturada'):
 #     """Aplica filtros aos dados."""
 #     df_filtrado = df.copy()
-
-#     # Define o ano atual como padrão se 'ano' não for especificado
 #     if ano is None:
 #         ano = datetime.datetime.now().year
-
-#     # Define o mês atual como padrão se 'mes' não for especificado
 #     if mes is None:
 #         mes = datetime.datetime.now().month
-
 #     if vendedor != 'Todos':
 #         df_filtrado = df_filtrado[df_filtrado['Vendedor'] == vendedor]
 #     if mes is not None:
@@ -125,17 +212,58 @@
 #         df_filtrado = df_filtrado[df_filtrado['Ano'] == ano]
 #     if situacao != 'Todos':
 #         df_filtrado = df_filtrado[df_filtrado['situacao'] == situacao]
-
 #     return df_filtrado
 
-# def renderizar_pagina_vendas(df):
-#     print(f"Número de valores NaN na coluna 'Mes': {df['Mes'].isnull().sum()}")
+# def processar_dados_ticket_medio(df):
+#     df['Data_Emissao'] = pd.to_datetime(df['Data_Emissao'], format='mixed', dayfirst=True)
+#     df['Semana'] = df['Data_Emissao'].dt.isocalendar().week
+#     colunas_nf_unicas = ['NF', 'Data_Emissao', 'Vendedor', 'Valor_Total_Nota', 'Mes', 'Ano', 'Semana', 'situacao']
+#     df_nf_unicas = df.drop_duplicates(subset='NF')[colunas_nf_unicas].copy()
+#     df_nf_unicas = df_nf_unicas[df_nf_unicas['situacao'] == 'Faturada']
 
 #     ano_atual = datetime.datetime.now().year
 #     mes_atual = datetime.datetime.now().month
- 
 
-#     df_filtrado = aplicar_filtros(df, 'Todos', mes_atual, ano_atual, 'Faturada')
+#     df_nf_unicas = aplicar_filtros(df_nf_unicas, mes=mes_atual, ano=ano_atual)
+
+#     df_resumo = df_nf_unicas.groupby(['Ano', 'Mes', 'Semana', 'Vendedor'])['NF'].count().reset_index(name='Quantidade_Notas_Semana')
+#     df_nf_unicas = pd.merge(df_nf_unicas, df_resumo, on=['Ano', 'Mes', 'Semana', 'Vendedor'], how='left')
+#     df_nf_unicas['Quantidade_Notas_Semana'] = df_nf_unicas['Quantidade_Notas_Semana'].fillna(0).astype(int)
+
+#     df_resumo_vendas = df_nf_unicas.groupby(['Ano', 'Mes', 'Semana', 'Vendedor'])['Valor_Total_Nota'].sum().reset_index(name='Soma_Venda_Semana')
+#     df_nf_unicas = pd.merge(df_nf_unicas, df_resumo_vendas, on=['Ano', 'Mes', 'Semana', 'Vendedor'], how='left')
+
+#     df_ticket_medio = df_nf_unicas.groupby(['Vendedor', 'Semana'])['Valor_Total_Nota'].mean().reset_index(name='Ticket_Medio')
+#     df_ticket_medio['Ticket Medio'] = df_ticket_medio['Ticket_Medio'].apply(formatar_moeda)
+    
+#     return df_ticket_medio
+
+# def criar_grafico_pizza_vendas_linha(df):
+#     """Cria um gráfico de pizza mostrando as vendas por linha de produto."""
+#     df_linha = df.groupby('Linha')['Valor_Total_Item'].sum().reset_index()
+#     fig = px.pie(df_linha, values='Valor_Total_Item', names='Linha', 
+#                  title='Vendas por Linha de Produto', 
+#                  hover_data=['Valor_Total_Item'])
+#     fig.update_traces(
+#         textposition='inside', 
+#         textinfo='percent+label',
+#         textfont=dict(size=22)  
+#     )
+#     fig.update_layout(
+#         height=700,
+#         showlegend=True,
+#         title_font=dict(size=40, family="Times New Roman")
+#     )
+#     return fig
+
+
+
+
+# def renderizar_pagina_vendas_parte1(df):
+#     df_filtrado = aplicar_filtros(df)
+
+#     ano_atual = datetime.datetime.now().year
+#     mes_atual = datetime.datetime.now().month
 
 #     total_nf, total_qtd_produto, valor_total_item, total_custo_compra, total_lucro_venda = calcular_metricas(df_filtrado)
 
@@ -146,159 +274,117 @@
 #     col4.metric("Custo Total", formatar_moeda(total_custo_compra))
 #     col5.metric("Margem Bruta", formatar_moeda(total_lucro_venda))
 
-#     col_graf1, col_graf2, col_graf3 = st.columns(3)
-
-#     with col_graf1:
-#         if 'Dia' in df.columns:
+#     if 'Dia' in df.columns:
 #             fig_vendas_diarias = criar_grafico_vendas_diarias(df_filtrado, mes_atual, ano_atual)
 #             st.plotly_chart(fig_vendas_diarias)
 
-#         fig_linha = criar_grafico_barras(agrupar_e_somar(df_filtrado, 'Linha'), 'Linha', 'Valor_Total_Item',
-#                                         'Vendas por Linha de Produto', {'Valor_Total_Item': 'Valor Total de Venda'})
-#         st.plotly_chart(fig_linha)
 
-#     with col_graf2:
+#     col_graf1, col_graf2= st.columns([3,3])
+
+        
+
+#     with col_graf1:
+
+    
 #         fig_vendedor = criar_grafico_barras(agrupar_e_somar(df_filtrado, 'Vendedor'), 'Vendedor', 'Valor_Total_Item',
 #                                             'Vendas por Vendedor', {'Valor_Total_Item': 'Valor Total de Venda'})
 #         st.plotly_chart(fig_vendedor)
+
+
+
+#     with col_graf2:
 
 #         fig_produtos = criar_grafico_barras(produtos_mais_vendidos(df_filtrado), 'Descricao_produto', 'Valor_Total_Item',
 #                                             'Top 10 Produtos Mais Vendidos',
 #                                             {'Descricao_produto': 'Produto', 'Valor_Total_Item': 'Valor Total de Venda'})
 #         st.plotly_chart(fig_produtos)
 
+# def renderizar_pagina_vendas_parte2(df):
+#     df_filtrado = aplicar_filtros(df)
 
-#     def processar_dados(df):
-#         df['Data_Emissao'] = pd.to_datetime(df['Data_Emissao'], format='mixed', dayfirst=True)
-#         df['Semana'] = df['Data_Emissao'].dt.isocalendar().week
-#         colunas_nf_unicas = ['NF', 'Data_Emissao', 'Vendedor', 'Valor_Total_Nota', 'Mes', 'Ano', 'Semana', 'situacao']
-#         df_nf_unicas = df.drop_duplicates(subset='NF')[colunas_nf_unicas].copy()
-#         df_nf_unicas = df_nf_unicas[df_nf_unicas['situacao'] == 'Faturada']
+#     df_ticket_medio = processar_dados_ticket_medio(df_filtrado)
 
-#         meses_abreviados = {
-#             1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun',
-#             7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
-#         }
+#     df_ranking = ranking_clientes(df_filtrado)
+#     df_ranking = df_ranking.reset_index(drop=True)
+#     df_ranking = df_ranking.iloc[::-1]
 
-#         meses_numericos = sorted(df_nf_unicas['Mes'].unique().tolist(), key=int)
-#         mes = [meses_abreviados[mes] for mes in meses_numericos]
+#     fig = px.bar(
+#         df_ranking,
+#         x="Valor_Total_Item",
+#         y="Cliente",
+#         orientation="h",
+#         title="Top Clientes por Faturamento (Personalizado)",
+#         labels={"Valor_Total_Item": "Faturamento (R$)", "Cliente": "Clientes"},
+#         text=df_ranking["Valor_Total_Item"],
+#         color="Valor_Total_Item", 
+#         color_continuous_scale="Viridis"
+#     )
 
-#         ano = sorted(df_nf_unicas['Ano'].unique().tolist(), key=int)
+#     fig.update_traces(
+#         textposition="inside",
+#         textfont=dict(size=28, color="black") 
+#     )
 
-#         ano_atual = datetime.datetime.now().year
-#         mes_atual = datetime.datetime.now().month
-#         mes_atual_abreviado = meses_abreviados[mes_atual]
-
-#         # Adicionar o ano e mês atuais se eles não estiverem na lista
-#         if ano_atual not in ano:
-#             ano.append(ano_atual)
-#             ano.sort()
-
-#         if mes_atual_abreviado not in mes:
-#             mes.append(mes_atual_abreviado)
-#             mes.sort(key=lambda x: list(meses_abreviados.values()).index(x))
-
-#         ano_selecionado = ano_atual
-#         mes_selecionado = mes_atual_abreviado
-
-#         def aplicar_filtros(df, mes_selecionado, ano_selecionado):
-#             if mes_selecionado != 'Todos':
-#                 meses_invertidos = {v: k for k, v in meses_abreviados.items()}
-#                 mes_numero = meses_invertidos[mes_selecionado]
-#                 df = df[df['Mes'] == mes_numero]
-#             if ano_selecionado != 'Todos':
-#                 df = df[df['Ano'] == ano_selecionado]
-#             return df
-
-#         df_nf_unicas = aplicar_filtros(df_nf_unicas, mes_selecionado, ano_selecionado)
-
-#         df_resumo = df_nf_unicas.groupby(['Ano', 'Mes', 'Semana', 'Vendedor'])['NF'].count().reset_index(name='Quantidade_Notas_Semana')
-#         df_nf_unicas = pd.merge(df_nf_unicas, df_resumo, on=['Ano', 'Mes', 'Semana', 'Vendedor'], how='left')
-#         df_nf_unicas['Quantidade_Notas_Semana'] = df_nf_unicas['Quantidade_Notas_Semana'].fillna(0).astype(int)
-
-#         df_resumo_vendas = df_nf_unicas.groupby(['Ano', 'Mes', 'Semana', 'Vendedor'])['Valor_Total_Nota'].sum().reset_index(name='Soma_Venda_Semana')
-#         df_nf_unicas = pd.merge(df_nf_unicas, df_resumo_vendas, on=['Ano', 'Mes', 'Semana', 'Vendedor'], how='left')
-
-
-#         df_ticket_medio = df_nf_unicas.groupby(['Vendedor', 'Semana'])['Valor_Total_Nota'].mean().reset_index(name='Ticket_Medio')
-#         df_pivot = df_ticket_medio.pivot(index='Vendedor', columns='Semana', values='Ticket_Medio')
-
-#         df_ticket_medio['Ticket Medio'] = df_ticket_medio['Ticket_Medio'].apply(formatar_moeda)
-
-#         st.subheader("Ticket Médio por Vendedor e Semana (Tabela)")
-
-#         df_pivot = df_pivot.applymap(formatar_moeda)
-#         html_table = df_pivot.to_html(classes='data', index=True)
-
-#         css = """
-#         <style type="text/css">
-#         table.data {
-#             border-collapse: collapse;
-#             width: 100%;
-#             background-color: #8FBC8F; /* Verde Médio para o fundo geral */
-#             color: #000; /* Cor do texto para contraste no fundo verde */
-#         }
-
-#         table.data th, table.data td {
-#             border: 2px solid black;
-#             padding: 8px;
-#             text-align: center;
-#             background-color: inherit; /* Herda o fundo verde da tabela */
-#         }
-
-#         table.data th {
-#             background-color: #2E8B57; /* Verde Marinho para o cabeçalho */
-#             color: #000000; /* Cor do texto branca para contraste no cabeçalho */
-#         }
-
-#         table.data tr:nth-child(even) {
-#             background-color: inherit; /* Herda o fundo verde da tabela */
-#         }
-
-#         table.data tr {color: #000; /* Cor do texto preta para contraste nas linhas */
-#         }
-#         </style>
-#         """
-#         components.html(css + html_table, height=300)
+#     fig.update_layout(
+#         xaxis_showticklabels=True,
+#         height=800,
+#         width=300,
+#         yaxis=dict(
+#             title=dict(font=dict(size=24)),
+#             tickfont=dict(size=16)
+#         ),
+#         xaxis=dict(
+#         tickfont=dict(size=16)
+#         ),
+#         title_font=dict(size=40, family="Times New Roman")
         
-#     df = processar_dados(df)
+#     )
 
-#     with col_graf3:
-
-#         # Obtém o ranking dos clientes a partir do seu DataFrame real
-#         df_ranking = ranking_clientes(df_filtrado)
-#         df_ranking = df_ranking.reset_index(drop=True)
-
-#         # Criação do gráfico de barras horizontal
-#         fig = px.bar(
-#             df_ranking,
-#             x="Valor_Total_Item",
-#             y="Cliente",
-#             orientation="h",
-#             title="Top Clientes por Faturamento",
-#             labels={"Valor_Total_Item": "Faturamento", "Cliente": "Clientes"},
-#             text=df_ranking["Valor_Total_Item"]
-#         )
-
-#         fig.update_traces(textposition="inside", marker_color="royalblue")
-
-#         # Ocultar o eixo X
-#         fig.update_layout(xaxis_showticklabels=False, height=850, width=100)
-
-#         # Exibir no Streamlit
-#         st.plotly_chart(fig)
-
-# # def renderizar_pagina_vendedor(df):
     
 
+#     st.plotly_chart(exibir_grafico_ticket_medio(df_ticket_medio))
+
+#     col_graf4, col_graf5 = st.columns([2,3])
+
+#     with col_graf4:
+
+        
+#         fig_pizza_linha = criar_grafico_pizza_vendas_linha(df_filtrado)
+#         st.plotly_chart(fig_pizza_linha)
+
+
+#     with col_graf5:
+#         # Obtém o ranking dos clientes a partir do seu DataFrame real
+#         st.plotly_chart(fig)        
+
+        
+
 # def main():
+#     """Função principal para carregar dados e renderizar as páginas em loop."""
 #     caminho_arquivo = CAMINHO_ARQUIVO_VENDAS
 
 #     if caminho_arquivo and os.path.exists(caminho_arquivo):
 #         try:
 #             df = carregar_dados(caminho_arquivo)
 #             if df is not None:
-#                 renderizar_pagina_vendas(df)
+#                 if 'pagina_atual' not in st.session_state:
+#                     st.session_state.pagina_atual = 1
+
+#                 empty_space = st.empty()  # Cria um espaço vazio
+
+#                 if st.session_state.pagina_atual == 1:
+#                     with empty_space.container():  # Preenche o espaço vazio com a primeira página
+#                         renderizar_pagina_vendas_parte1(df)
+#                     time.sleep(20)
+#                     st.session_state.pagina_atual = 2
+#                     st.rerun()
+
+#                 elif st.session_state.pagina_atual == 2:
+#                     with empty_space.container():  # Preenche o espaço vazio com a segunda página
+#                         renderizar_pagina_vendas_parte2(df)
+#                     time.sleep(20)
+#                     st.session_state.pagina_atual = 1
+#                     st.rerun()
 
 #         except Exception as e:
 #             st.error(f"Ocorreu um erro ao carregar o arquivo: {e}")
