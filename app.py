@@ -128,7 +128,7 @@ def criar_grafico_vendas_diarias(df, mes, ano):
         marker=dict(line=dict(color='black', width=1)),
         hoverlabel=dict(bgcolor="black", font_size=22,
             font_family="Arial-bold, sans-serif"), 
-            textfont=dict(size=55, color='#000000', family="Garamond"),
+            textfont=dict(size=55, color='#ffffff', family="Garamond"),
             textangle=0, textposition='outside', cliponaxis=False)
                
     fig.update_layout(yaxis_title='Valor Total de Venda',
@@ -163,7 +163,7 @@ def exibir_grafico_ticket_medio(df_ticket_medio):
     fig.update_traces(
         marker=dict(line=dict(color='black', width=1)),
         hoverlabel=dict(bgcolor="black", font_size=22, font_family="Arial, sans-serif"),
-        textfont=dict(size=50, color='#000000', family="Arial, sans-serif", 
+        textfont=dict(size=50, color='#ffffff', family="Arial, sans-serif", 
                       ),
         textposition='outside',
         cliponaxis=False
