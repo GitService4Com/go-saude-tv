@@ -148,23 +148,22 @@ def criar_grafico_vendas_diarias(df, mes, ano):
 
 def exibir_grafico_ticket_medio(df_ticket_medio):
     df_ticket_medio['Ticket Medio'] = df_ticket_medio['Ticket_Medio'].apply(formatar_moeda)
+
     fig = px.bar(
         df_ticket_medio,
         x="Vendedor",
         y="Ticket_Medio",
-        color="Semana",
-        barmode="group",
-        title="Ticket Médio por Vendedor e Semana",
-        labels={"Ticket_Medio": "Ticket Médio", "Vendedor": "Vendedor", "Semana": "Semana"},
+        title="Ticket Médio por Vendedor",
+        labels={"Ticket_Medio": "Ticket Médio", "Vendedor": "Vendedor"},
         text=df_ticket_medio["Ticket Medio"],
         template="plotly_dark",
         hover_data={"Vendedor": False, "Ticket_Medio": False, 'Ticket Medio': True}
     )
+
     fig.update_traces(
         marker=dict(line=dict(color='black', width=1)),
         hoverlabel=dict(bgcolor="black", font_size=22, font_family="Arial, sans-serif"),
-        textfont=dict(size=50, color='#ffffff', family="Arial, sans-serif", 
-                      ),
+        textfont=dict(size=50, color='#ffffff', family="Arial, sans-serif"),
         textposition='outside',
         cliponaxis=False
     )
@@ -172,7 +171,7 @@ def exibir_grafico_ticket_medio(df_ticket_medio):
     fig.update_layout(
         yaxis_title="Ticket Médio",
         xaxis_title="Vendedor",
-        showlegend=True,
+        showlegend=False,
         height=1100, width=900,
         xaxis=dict(tickfont=dict(size=28)),
         yaxis=dict(
@@ -183,21 +182,9 @@ def exibir_grafico_ticket_medio(df_ticket_medio):
             tickfont=dict(size=28),
         ),
         title_font=dict(size=60, family="Times New Roman"),
-        legend=dict(
-            title="Semanas",
-            orientation="v",
-            yanchor="top",
-            y=1,
-            xanchor="left",
-            x=1,
-            font=dict(
-                size=28,
-                family="Arial, sans-serif",
-                color="black",
-            )
-        ),
         bargap=0.1
     )
+
     return fig
 
 def aplicar_filtros(df, vendedor='Todos', mes=None, ano=None, situacao='Faturada'):
@@ -220,8 +207,7 @@ def aplicar_filtros(df, vendedor='Todos', mes=None, ano=None, situacao='Faturada
 
 def processar_dados_ticket_medio(df):
     df['Data_Emissao'] = pd.to_datetime(df['Data_Emissao'], format='mixed', dayfirst=True)
-    df['Semana'] = df['Data_Emissao'].dt.isocalendar().week
-    colunas_nf_unicas = ['NF', 'Data_Emissao', 'Vendedor', 'Valor_Total_Nota', 'Mes', 'Ano', 'Semana', 'situacao']
+    colunas_nf_unicas = ['NF', 'Data_Emissao', 'Vendedor', 'Valor_Total_Nota', 'Mes', 'Ano', 'situacao']
     df_nf_unicas = df.drop_duplicates(subset='NF')[colunas_nf_unicas].copy()
     df_nf_unicas = df_nf_unicas[df_nf_unicas['situacao'] == 'Faturada']
 
@@ -230,15 +216,8 @@ def processar_dados_ticket_medio(df):
 
     df_nf_unicas = aplicar_filtros(df_nf_unicas, mes=mes_atual, ano=ano_atual)
 
-    df_resumo = df_nf_unicas.groupby(['Ano', 'Mes', 'Semana', 'Vendedor'])['NF'].count().reset_index(name='Quantidade_Notas_Semana')
-    df_nf_unicas = pd.merge(df_nf_unicas, df_resumo, on=['Ano', 'Mes', 'Semana', 'Vendedor'], how='left')
-    df_nf_unicas['Quantidade_Notas_Semana'] = df_nf_unicas['Quantidade_Notas_Semana'].fillna(0).astype(int)
-
-    df_resumo_vendas = df_nf_unicas.groupby(['Ano', 'Mes', 'Semana', 'Vendedor'])['Valor_Total_Nota'].sum().reset_index(name='Soma_Venda_Semana')
-    df_nf_unicas = pd.merge(df_nf_unicas, df_resumo_vendas, on=['Ano', 'Mes', 'Semana', 'Vendedor'], how='left')
-
-    df_ticket_medio = df_nf_unicas.groupby(['Vendedor', 'Semana'])['Valor_Total_Nota'].mean().reset_index(name='Ticket_Medio')
-    df_ticket_medio['Ticket Medio'] = df_ticket_medio['Ticket_Medio'].apply(formatar_moeda)
+    df_ticket_medio = df_nf_unicas.groupby('Vendedor')['Valor_Total_Nota'].mean().reset_index(name='Ticket_Medio')
+    df_ticket_medio['Ticket Medio'] = df_ticket_medio['Ticket_Medio'].apply(formatar_moeda) 
     
     return df_ticket_medio
 
