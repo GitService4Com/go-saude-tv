@@ -5,6 +5,7 @@ import streamlit.components.v1 as components
 import datetime
 import time
 import os
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="Go MED SAÚDE", page_icon=":bar_chart:", layout="wide")
 
@@ -14,6 +15,15 @@ CAMINHO_ARQUIVO_VENDAS = "df_vendas.csv"
 MESES_ABREVIADOS = {
     1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun',
     7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
+}
+
+METAS_VENDEDORES = {
+    "VERIDIANA SERRA": 500000.00,
+    "CESAR GAMA": 400000.00,
+    "JORGE TOTE": 150000.00,
+    "FABIAN SILVA": 100000.00,
+    "DENIS SOUSA": 1000000.00,
+    "THIAGO SOUSA": 200000.00
 }
 
 def carregar_dados(caminho_arquivo):
@@ -40,7 +50,6 @@ def formatar_moeda(valor, simbolo_moeda="R$"):
     
 
 def calcular_metricas(df):
-    """Calcula métricas de vendas, incluindo o Ticket Médio Geral."""
     total_nf = len(df['NF'].unique()) 
     total_qtd_produto = df['Qtd_Produto'].sum() 
     valor_total_item = df['Valor_Total_Item'].sum()  
@@ -59,7 +68,6 @@ def agrupar_e_somar(df, coluna_agrupamento):
 
 
 def ranking_clientes(df, top_n=20,max_len=25):
-    """Retorna os top N clientes com maior faturamento total, incluindo o número do ranking."""
     df_clientes = df.groupby('Cliente').agg({'Valor_Total_Item': 'sum'}).reset_index()
     df_clientes = df_clientes.sort_values(by='Valor_Total_Item', ascending=False).head(top_n)
     df_clientes['Ranking'] = range(1, len(df_clientes) + 1)
@@ -68,8 +76,7 @@ def ranking_clientes(df, top_n=20,max_len=25):
     df_clientes['Cliente'] = df_clientes['Cliente'].str[:max_len]
     return df_clientes
 
-
-def produtos_mais_vendidos(df, top_n=10, ordenar_por='Valor_Total_Item', max_len=30):
+def produtos_mais_vendidos(df, top_n=10, ordenar_por='Valor_Total_Item', max_len=45):
     df_agrupado = df.groupby('Descricao_produto')[ordenar_por].sum().reset_index()
     df_ordenado = df_agrupado.sort_values(by=ordenar_por, ascending=False)
     df_ordenado['Descricao_produto'] = df_ordenado['Descricao_produto'].str[:max_len]
@@ -188,7 +195,6 @@ def exibir_grafico_ticket_medio(df_ticket_medio):
     return fig
 
 def aplicar_filtros(df, vendedor='Todos', mes=None, ano=None, situacao='Faturada'):
-    """Aplica filtros aos dados."""
     df_filtrado = df.copy()
     if ano is None:
         ano = datetime.datetime.now().year
@@ -222,7 +228,6 @@ def processar_dados_ticket_medio(df):
     return df_ticket_medio
 
 def criar_grafico_pizza_vendas_linha(df):
-    """Cria um gráfico de pizza mostrando as vendas por linha de produto."""
     df_linha = df.groupby('Linha')['Valor_Total_Item'].sum().reset_index()
     fig = px.pie(df_linha, values='Valor_Total_Item', names='Linha', 
                  title='Vendas por Linha de Produto', 
@@ -240,6 +245,71 @@ def criar_grafico_pizza_vendas_linha(df):
     return fig
 
 
+def calcular_performance_vendedores(df_vendas):
+    vendas_por_vendedor = df_vendas.groupby('Vendedor')['Valor_Total_Item'].sum().reset_index()
+    vendas_por_vendedor = vendas_por_vendedor.rename(columns={'Valor_Total_Item': 'Total_Vendido'})
+
+    vendas_por_vendedor['Meta'] = vendas_por_vendedor['Vendedor'].map(METAS_VENDEDORES).fillna(0)
+    vendas_por_vendedor['Porcentagem_Atingida'] = (vendas_por_vendedor['Total_Vendido'] / vendas_por_vendedor['Meta'] * 100).fillna(0).round(2)
+    vendas_por_vendedor['Meta_Formatada'] = vendas_por_vendedor['Meta'].apply(formatar_moeda)
+    vendas_por_vendedor['Total_Vendido_Formatado'] = vendas_por_vendedor['Total_Vendido'].apply(formatar_moeda)
+    vendas_por_vendedor['Porcentagem_Texto'] = vendas_por_vendedor['Porcentagem_Atingida'].astype(str) + '%'
+
+    return vendas_por_vendedor
+
+def criar_grafico_performance_vendedores(df_performance):
+    fig = go.Figure()
+
+    # Barra de Meta (Background)
+    fig.add_trace(go.Bar(
+        x=df_performance['Vendedor'],
+        y=df_performance['Meta'],
+        name='Meta',
+        marker=dict(color='lightgrey'),
+        text=df_performance['Meta_Formatada'],
+        textposition='outside',
+        insidetextanchor='end',
+        textfont=dict(size=32, color='#fff', family="Arial, sans-serif")
+    ))
+
+    fig.add_trace(go.Bar(
+        x=df_performance['Vendedor'],
+        y=df_performance['Total_Vendido'],
+        name='Total Vendido',
+        marker_color='skyblue',
+        text=df_performance['Total_Vendido_Formatado'],
+        textposition='outside',
+        insidetextanchor='end'
+    ))
+
+    # Ajustar as anotações de porcentagem para ficarem acima da barra de vendas
+    for index, row in df_performance.iterrows():
+        fig.add_annotation(
+            x=row['Vendedor'],
+            y=row['Total_Vendido'] + (row['Total_Vendido'] * 0.05), 
+            text=row['Porcentagem_Texto'],
+            showarrow=False,
+            font=dict(size=32, color='#000000', family="Arial, sans-serif"),
+            align='center',
+            hoverlabel=dict(bgcolor="#fff", font_size=22, font_family="Arial, sans-serif")
+        )
+
+    fig.update_layout(
+        title='Performance de Vendas por Vendedor',
+        xaxis_title='Vendedor',
+        yaxis_title='Valor (R$)',
+        yaxis=dict(tickformat=',.2f'),
+        template='plotly_white',
+        barmode='overlay', # Essencial para sobrepor as barras
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        height=1100,
+        width=700,
+        xaxis=dict(tickfont=dict(size=18)),
+        title_font=dict(size=40, family="Times New Roman"),
+        margin=dict(l=50, r=20, b=100, t=50)
+    )
+    return fig
 
 def renderizar_pagina_vendas(df):
     df_filtrado = aplicar_filtros(df)
@@ -248,15 +318,15 @@ def renderizar_pagina_vendas(df):
     mes_atual = datetime.datetime.now().month
 
     total_nf, total_qtd_produto, valor_total_item, total_custo_compra, total_lucro_venda, ticket_medio_geral = calcular_metricas(df_filtrado)
-    
+
 
     def card_style(metric_name, value, color="#FFFFFF", bg_color="#262730"):
         return f"""
         <div style="
-            padding: 15px; 
-            border-radius: 15px; 
-            background-color: {bg_color}; 
-            color: {color}; 
+            padding: 15px;
+            border-radius: 15px;
+            background-color: {bg_color};
+            color: {color};
             text-align: center;
             box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
         ">
@@ -265,10 +335,10 @@ def renderizar_pagina_vendas(df):
         </div>
         """
 
-    col1, col2, col3, col4, col5, col6, col7 = st.columns([0.5, 1, 1, 1, 1, 1, 1])
+    col1, col2, col3, col4, col5, col6 = st.columns([0.4, 1, 1, 1, 1, 1])
 
     with col1:
-        st.image(CAMINHO_ARQUIVO_IMAGENS, width=250)
+        st.image(CAMINHO_ARQUIVO_IMAGENS, width=200)
     with col2:
         st.markdown(card_style("Total de Notas", f"{total_nf}"), unsafe_allow_html=True)
     with col3:
@@ -276,13 +346,9 @@ def renderizar_pagina_vendas(df):
     with col4:
         st.markdown(card_style("Faturamento Total", formatar_moeda(valor_total_item)), unsafe_allow_html=True)
     with col5:
-        st.markdown(card_style("Custo Total", formatar_moeda(total_custo_compra)), unsafe_allow_html=True)
-    with col6:
         st.markdown(card_style("Margem Bruta", formatar_moeda(total_lucro_venda)), unsafe_allow_html=True)
-    with col7:
+    with col6:
         st.markdown(card_style("Ticket Médio Geral", formatar_moeda(ticket_medio_geral)), unsafe_allow_html=True)
-
-    
 
 
     df_ticket_medio = processar_dados_ticket_medio(df_filtrado)
@@ -291,24 +357,24 @@ def renderizar_pagina_vendas(df):
     df_ranking = df_ranking.reset_index(drop=True)
     df_ranking = df_ranking.iloc[::-1]
 
-    fig = px.bar(
+    fig_ranking = px.bar(
         df_ranking,
         x="Valor_Total_Item",
         y="Cliente",
         orientation="h",
-        title="Top Clientes por Faturamento (Personalizado)",
+        title="Top Clientes por Faturamento",
         labels={"Valor_Total_Item": "Faturamento (R$)", "Cliente": "Clientes"},
         text=df_ranking["Valor_Total_Item"],
-        color="Valor_Total_Item", 
+        color="Valor_Total_Item",
         color_continuous_scale="Viridis"
     )
 
-    fig.update_traces(
+    fig_ranking.update_traces(
         textposition="inside",
-        textfont=dict(size=28, color="black") 
+        textfont=dict(size=28, color="black")
     )
 
-    fig.update_layout(
+    fig_ranking.update_layout(
         xaxis_showticklabels=True,
         height=1100,
         width=750,
@@ -317,13 +383,15 @@ def renderizar_pagina_vendas(df):
             tickfont=dict(size=16)
         ),
         xaxis=dict(
-        tickfont=dict(size=16)
+            tickfont=dict(size=16)
         ),
         title_font=dict(size=50, family="Times New Roman")
-        
+
     )
 
-            
+    # Calcular performance dos vendedores
+    df_performance_vendedores = calcular_performance_vendedores(df_filtrado)
+    fig_performance = criar_grafico_performance_vendedores(df_performance_vendedores)
 
     graphs = [
         criar_grafico_vendas_diarias(df_filtrado, mes_atual, ano_atual),
@@ -331,7 +399,8 @@ def renderizar_pagina_vendas(df):
         criar_grafico_barras(produtos_mais_vendidos(df_filtrado), 'Descricao_produto', 'Valor_Total_Item', 'Top 10 Produtos Mais Vendidos', {'Descricao_produto': 'Produto', 'Valor_Total_Item': 'Valor Total de Venda'}),
         exibir_grafico_ticket_medio(df_ticket_medio),
         criar_grafico_pizza_vendas_linha(df_filtrado),
-        fig
+        fig_ranking,
+        fig_performance 
     ]
 
     if "graph_index" not in st.session_state:
@@ -339,10 +408,10 @@ def renderizar_pagina_vendas(df):
 
     st.plotly_chart(graphs[st.session_state.graph_index])
 
-    time.sleep(20)  
+    time.sleep(20)
 
     st.session_state.graph_index = (st.session_state.graph_index + 1) % len(graphs)
-    st.rerun()  
+    st.rerun()
 
     with open("no_sleep_component.html", "r") as f:
         html_string = f.read()
