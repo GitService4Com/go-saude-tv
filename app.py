@@ -227,20 +227,34 @@ def processar_dados_ticket_medio(df):
     
     return df_ticket_medio
 
-def criar_grafico_pizza_vendas_linha(df):
-    df_linha = df.groupby('Linha')['Valor_Total_Item'].sum().reset_index()
-    fig = px.pie(df_linha, values='Valor_Total_Item', names='Linha', 
-                 title='Vendas por Linha de Produto', 
-                 hover_data=['Valor_Total_Item'])
+def criar_grafico_barras_vendas_linha(df):
+    df_grouped = df.groupby('Linha')['Valor_Total_Item'].sum().reset_index()
+    total_vendas = df_grouped['Valor_Total_Item'].sum()
+    df_grouped['Porcentagem'] = (df_grouped['Valor_Total_Item'] / total_vendas) * 100
+    df_grouped = df_grouped.sort_values(by='Valor_Total_Item', ascending=False)
+
+    fig = px.bar(df_grouped, x='Linha', y='Valor_Total_Item',
+                 title='Participação de Vendas por Linha de Produto',
+                 hover_data=['Valor_Total_Item', 'Porcentagem'],
+                 text='Porcentagem')
+
     fig.update_traces(
-        textposition='inside', 
-        textinfo='percent+label',
-        textfont=dict(size=38)  
+        texttemplate='%{text:.2f}%',
+        textposition='outside',
+        textfont_size=32
     )
+
     fig.update_layout(
-        height=1200, width=1200,
-        showlegend=True,
-        title_font=dict(size=40, family="Times New Roman")
+        height=1100,
+        width=700,
+        showlegend=False,
+        title_font=dict(size=40, family="Times New Roman"),
+        xaxis_title='Linha de Produto',
+        yaxis_title='Valor Total de Vendas',
+        yaxis=dict(tickformat=',.2f'),
+        xaxis=dict(
+            tickfont=dict(size=32)
+        )
     )
     return fig
 
@@ -260,6 +274,9 @@ def calcular_performance_vendedores(df_vendas):
 def criar_grafico_performance_vendedores(df_performance):
     fig = go.Figure()
 
+    max_meta = df_performance['Meta'].max()
+    limite_superior_yaxis = max_meta * 1.2
+
     # Barra de Meta (Background)
     fig.add_trace(go.Bar(
         x=df_performance['Vendedor'],
@@ -278,21 +295,32 @@ def criar_grafico_performance_vendedores(df_performance):
         name='Total Vendido',
         marker_color='skyblue',
         text=df_performance['Total_Vendido_Formatado'],
-        textposition='outside',
-        insidetextanchor='end'
+        textposition='inside',
+        insidetextanchor='middle',
+        textfont=dict(size=28, color='#000', family="Arial, sans-serif")
     ))
 
-    # Ajustar as anotações de porcentagem para ficarem acima da barra de vendas
+    altura_anotacao = max_meta * 0.05 # 5% da maior meta acima
+
     for index, row in df_performance.iterrows():
+        # Condição para verificar se o vendedor passou da meta
+        if row['Total_Vendido'] > row['Meta']:
+            y_pos_annotation = row['Meta'] + altura_anotacao
+            cor_texto_anotacao = '#ffffff'  # Branco
+        else:
+            y_pos_annotation = row['Total_Vendido'] + (row['Total_Vendido'] * 0.15) # Posição original
+            cor_texto_anotacao = '#000000'  # Preto (original)
+
         fig.add_annotation(
             x=row['Vendedor'],
-            y=row['Total_Vendido'] + (row['Total_Vendido'] * 0.05), 
+            y=y_pos_annotation,
             text=row['Porcentagem_Texto'],
             showarrow=False,
-            font=dict(size=32, color='#000000', family="Arial, sans-serif"),
+            font=dict(size=32, color=cor_texto_anotacao, family="Arial, sans-serif"),
             align='center',
             hoverlabel=dict(bgcolor="#fff", font_size=22, font_family="Arial, sans-serif")
         )
+        
 
     fig.update_layout(
         title='Performance de Vendas por Vendedor',
@@ -300,12 +328,12 @@ def criar_grafico_performance_vendedores(df_performance):
         yaxis_title='Valor (R$)',
         yaxis=dict(tickformat=',.2f'),
         template='plotly_white',
-        barmode='overlay', # Essencial para sobrepor as barras
+        barmode='overlay', # sobrepor as barras
         showlegend=True,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         height=1100,
         width=700,
-        xaxis=dict(tickfont=dict(size=18)),
+        xaxis=dict(tickfont=dict(size=28)),
         title_font=dict(size=40, family="Times New Roman"),
         margin=dict(l=50, r=20, b=100, t=50)
     )
@@ -395,12 +423,12 @@ def renderizar_pagina_vendas(df):
 
     graphs = [
         criar_grafico_vendas_diarias(df_filtrado, mes_atual, ano_atual),
-        criar_grafico_barras(agrupar_e_somar(df_filtrado, 'Vendedor'), 'Vendedor', 'Valor_Total_Item', 'Vendas por Vendedor', {'Valor_Total_Item': 'Valor Total de Venda'}),
-        criar_grafico_barras(produtos_mais_vendidos(df_filtrado), 'Descricao_produto', 'Valor_Total_Item', 'Top 10 Produtos Mais Vendidos', {'Descricao_produto': 'Produto', 'Valor_Total_Item': 'Valor Total de Venda'}),
+        fig_performance,
         exibir_grafico_ticket_medio(df_ticket_medio),
-        criar_grafico_pizza_vendas_linha(df_filtrado),
-        fig_ranking,
-        fig_performance 
+        criar_grafico_barras(produtos_mais_vendidos(df_filtrado), 'Descricao_produto', 'Valor_Total_Item', 'Top 10 Produtos Mais Vendidos', {'Descricao_produto': 'Produto', 'Valor_Total_Item': 'Valor Total de Venda'}),
+        criar_grafico_barras_vendas_linha(df_filtrado),
+        fig_ranking
+        
     ]
 
     if "graph_index" not in st.session_state:
