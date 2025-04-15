@@ -50,16 +50,18 @@ def formatar_moeda(valor, simbolo_moeda="R$"):
     
 
 def calcular_metricas(df):
-    total_nf = len(df['NF'].unique()) 
-    total_qtd_produto = df['Qtd_Produto'].sum() 
-    valor_total_item = df['Valor_Total_Item'].sum()  
-    total_custo_compra = df['Total_Custo_Compra'].sum()  
-    total_lucro_venda = df['Total_Lucro_Venda_Item'].sum() 
-
+    total_nf = len(df['NF'].unique())
+    total_qtd_produto = df['Qtd_Produto'].sum()
+    valor_total_item = df['Valor_Total_Item'].sum()
+    total_custo_compra = df['Total_Custo_Compra'].sum()
+    total_lucro_venda_absoluto = df['Total_Lucro_Venda_Item'].sum() # Mantemos o valor absoluto para referência
 
     ticket_medio_geral = valor_total_item / total_nf if total_nf > 0 else 0
 
-    return total_nf, total_qtd_produto, valor_total_item, total_custo_compra, total_lucro_venda, ticket_medio_geral
+    # Calcular a porcentagem do lucro de venda em relação ao valor total dos itens
+    porcentagem_lucro_venda = (total_lucro_venda_absoluto / valor_total_item) * 100 if valor_total_item > 0 else 0
+
+    return total_nf, total_qtd_produto, valor_total_item, total_custo_compra, total_lucro_venda_absoluto, ticket_medio_geral, porcentagem_lucro_venda
 
 def agrupar_e_somar(df, coluna_agrupamento):
     return df.groupby(coluna_agrupamento).agg(
@@ -260,7 +262,11 @@ def criar_grafico_barras_vendas_linha(df):
 
 
 def calcular_performance_vendedores(df_vendas):
-    vendas_por_vendedor = df_vendas.groupby('Vendedor')['Valor_Total_Item'].sum().reset_index()
+    # Filtrar os vendedores diferentes de 'GERAL VENDAS'
+    vendas_por_vendedor_filtrado = df_vendas[df_vendas['Vendedor'] != 'GERAL VENDAS'].copy()
+
+    # Realizar o groupby e os cálculos no DataFrame filtrado
+    vendas_por_vendedor = vendas_por_vendedor_filtrado.groupby('Vendedor')['Valor_Total_Item'].sum().reset_index()
     vendas_por_vendedor = vendas_por_vendedor.rename(columns={'Valor_Total_Item': 'Total_Vendido'})
 
     vendas_por_vendedor['Meta'] = vendas_por_vendedor['Vendedor'].map(METAS_VENDEDORES).fillna(0)
@@ -345,7 +351,7 @@ def renderizar_pagina_vendas(df):
     ano_atual = datetime.datetime.now().year
     mes_atual = datetime.datetime.now().month
 
-    total_nf, total_qtd_produto, valor_total_item, total_custo_compra, total_lucro_venda, ticket_medio_geral = calcular_metricas(df_filtrado)
+    total_nf, total_qtd_produto, valor_total_item, total_custo_compra, total_lucro_venda_absoluto, ticket_medio_geral, porcentagem_lucro_venda = calcular_metricas(df_filtrado)
 
 
     def card_style(metric_name, value, color="#FFFFFF", bg_color="#262730"):
@@ -363,10 +369,10 @@ def renderizar_pagina_vendas(df):
         </div>
         """
 
-    col1, col2, col3, col4, col5, col6 = st.columns([0.4, 1, 1, 1, 1, 1])
+    col1, col2, col3, col4, col5, col6 = st.columns([0.3, 1, 1, 1.2, 1.2, 1.2]) # Ajustei as proporções e adicionei uma coluna
 
     with col1:
-        st.image(CAMINHO_ARQUIVO_IMAGENS, width=200)
+        st.image(CAMINHO_ARQUIVO_IMAGENS, width=150) # Reduzi um pouco a largura da imagem para caber mais colunas
     with col2:
         st.markdown(card_style("Total de Notas", f"{total_nf}"), unsafe_allow_html=True)
     with col3:
@@ -374,9 +380,9 @@ def renderizar_pagina_vendas(df):
     with col4:
         st.markdown(card_style("Faturamento Total", formatar_moeda(valor_total_item)), unsafe_allow_html=True)
     with col5:
-        st.markdown(card_style("Margem Bruta", formatar_moeda(total_lucro_venda)), unsafe_allow_html=True)
+        st.markdown(card_style("Custo Total", formatar_moeda(total_custo_compra)), unsafe_allow_html=True) # Adicionei o custo total
     with col6:
-        st.markdown(card_style("Ticket Médio Geral", formatar_moeda(ticket_medio_geral)), unsafe_allow_html=True)
+        st.markdown(card_style("Margem Bruta (%)", f"{porcentagem_lucro_venda:.2f}%"), unsafe_allow_html=True) # Nova métrica da porcentagem
 
 
     df_ticket_medio = processar_dados_ticket_medio(df_filtrado)
