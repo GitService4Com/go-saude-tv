@@ -18,11 +18,10 @@ MESES_ABREVIADOS = {
 }
 
 METAS_VENDEDORES = {
-    "VERIDIANA SERRA": 500000.00,
-    "CESAR GAMA": 400000.00,
-    "JORGE TOTE": 150000.00,
-    "FABIAN SILVA": 100000.00,
-    "DENIS SOUSA": 1000000.00,
+    "VERIDIANA SERRA": 600000.00,
+    "CESAR GAMA": 450000.00,
+    "FABIAN SILVA": 400000.00,
+    "DENIS SOUSA": 1050000.00,
     "THIAGO SOUSA": 200000.00
 }
 
@@ -200,8 +199,6 @@ def aplicar_filtros(df, vendedor='Todos', mes=None, ano=None, situacao='Faturada
     df_filtrado = df.copy()
     if ano is None:
         ano = datetime.datetime.now().year
-    if mes is None:
-        mes = datetime.datetime.now().month
     if vendedor != 'Todos':
         df_filtrado = df_filtrado[df_filtrado['Vendedor'] == vendedor]
     if mes is not None:
@@ -263,7 +260,9 @@ def criar_grafico_barras_vendas_linha(df):
 
 def calcular_performance_vendedores(df_vendas):
     # Filtrar os vendedores diferentes de 'GERAL VENDAS'
-    vendas_por_vendedor_filtrado = df_vendas[df_vendas['Vendedor'] != 'GERAL VENDAS'].copy()
+    vendas_por_vendedor_filtrado = df_vendas[
+        (df_vendas['Vendedor'] != 'GERAL VENDAS') & (df_vendas['Vendedor'] != 'NATALIA SILVA') & (df_vendas['Vendedor'] != 'JORGE TOTE')
+    ].copy()
 
     # Realizar o groupby e os cálculos no DataFrame filtrado
     vendas_por_vendedor = vendas_por_vendedor_filtrado.groupby('Vendedor')['Valor_Total_Item'].sum().reset_index()
@@ -425,6 +424,10 @@ def renderizar_pagina_vendas(df):
 
     # Calcular performance dos vendedores
     df_performance_vendedores = calcular_performance_vendedores(df_filtrado)
+
+    # *** INSERIR A MODIFICAÇÃO AQUI ***
+    df_performance_vendedores['Vendedor'] = df_performance_vendedores['Vendedor'].replace('THIAGO SOUSA', 'LICITAÇÃO')
+
     fig_performance = criar_grafico_performance_vendedores(df_performance_vendedores)
 
     graphs = [
