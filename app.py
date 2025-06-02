@@ -259,7 +259,7 @@ def criar_grafico_barras_vendas_linha(df):
 
 
 def calcular_performance_vendedores(df_vendas):
-    # Filtrar os vendedores diferentes de 'GERAL VENDAS'
+
     vendas_por_vendedor_filtrado = df_vendas[
         (df_vendas['Vendedor'] != 'GERAL VENDAS') & (df_vendas['Vendedor'] != 'NATALIA SILVA') & (df_vendas['Vendedor'] != 'JORGE TOTE')
     ].copy()
@@ -345,10 +345,16 @@ def criar_grafico_performance_vendedores(df_performance):
     return fig
 
 def renderizar_pagina_vendas(df):
-    df_filtrado = aplicar_filtros(df)
-
     ano_atual = datetime.datetime.now().year
     mes_atual = datetime.datetime.now().month
+
+    # Aplicar o filtro para o mês e ano atuais
+    df_filtrado = aplicar_filtros(df, mes=mes_atual, ano=ano_atual)
+
+    # Verifica se o DataFrame filtrado está vazio
+    if df_filtrado.empty:
+        st.warning(f"Não há dados de vendas para o mês atual ({MESES_ABREVIADOS[mes_atual]}/{ano_atual}).")
+        return
 
     total_nf, total_qtd_produto, valor_total_item, total_custo_compra, total_lucro_venda_absoluto, ticket_medio_geral, porcentagem_lucro_venda = calcular_metricas(df_filtrado)
 
@@ -424,10 +430,7 @@ def renderizar_pagina_vendas(df):
 
     # Calcular performance dos vendedores
     df_performance_vendedores = calcular_performance_vendedores(df_filtrado)
-
-    # *** INSERIR A MODIFICAÇÃO AQUI ***
     df_performance_vendedores['Vendedor'] = df_performance_vendedores['Vendedor'].replace('THIAGO SOUSA', 'LICITAÇÃO')
-
     fig_performance = criar_grafico_performance_vendedores(df_performance_vendedores)
 
     graphs = [
@@ -471,3 +474,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

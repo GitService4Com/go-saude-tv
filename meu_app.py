@@ -18,11 +18,10 @@
 # }
 
 # METAS_VENDEDORES = {
-#     "VERIDIANA SERRA": 500000.00,
-#     "CESAR GAMA": 400000.00,
-#     "JORGE TOTE": 150000.00,
-#     "FABIAN SILVA": 100000.00,
-#     "DENIS SOUSA": 1000000.00,
+#     "VERIDIANA SERRA": 600000.00,
+#     "CESAR GAMA": 450000.00,
+#     "FABIAN SILVA": 400000.00,
+#     "DENIS SOUSA": 1050000.00,
 #     "THIAGO SOUSA": 200000.00
 # }
 
@@ -196,7 +195,7 @@
 
 #     return fig
 
-# def aplicar_filtros(df, vendedor='Todos', mes=4, ano=None, situacao='Faturada'):
+# def aplicar_filtros(df, vendedor='Todos', mes=5, ano=None, situacao='Faturada'):
 #     df_filtrado = df.copy()
 #     if ano is None:
 #         ano = datetime.datetime.now().year
@@ -218,7 +217,7 @@
 #     df_nf_unicas = df_nf_unicas[df_nf_unicas['situacao'] == 'Faturada']
 
 #     ano_atual = datetime.datetime.now().year
-#     mes_atual = 4
+#     mes_atual = 5
 
 #     df_nf_unicas = aplicar_filtros(df_nf_unicas, mes=mes_atual, ano=ano_atual)
 
@@ -347,7 +346,7 @@
 #     df_filtrado = aplicar_filtros(df)
 
 #     ano_atual = datetime.datetime.now().year
-#     mes_atual = 4
+#     mes_atual = 5
 
 #     total_nf, total_qtd_produto, valor_total_item, total_custo_compra, total_lucro_venda_absoluto, ticket_medio_geral, porcentagem_lucro_venda = calcular_metricas(df_filtrado)
 
