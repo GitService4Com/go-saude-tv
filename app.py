@@ -222,6 +222,9 @@ def processar_dados_ticket_medio(df):
     mes_atual = datetime.datetime.now().month
 
     df_nf_unicas = aplicar_filtros(df_nf_unicas, mes=mes_atual, ano=ano_atual)
+    
+    # Adicione esta linha para remover Veridiana do cálculo
+    df_nf_unicas = df_nf_unicas[df_nf_unicas['Vendedor'] != 'VERIDIANA SERRA']
 
     df_ticket_medio = df_nf_unicas.groupby('Vendedor')['Valor_Total_Nota'].mean().reset_index(name='Ticket_Medio')
     df_ticket_medio['Ticket Medio'] = df_ticket_medio['Ticket_Medio'].apply(formatar_moeda) 
