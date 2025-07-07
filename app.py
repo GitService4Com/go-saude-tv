@@ -231,36 +231,36 @@ def processar_dados_ticket_medio(df):
     
     return df_ticket_medio
 
-def criar_grafico_barras_vendas_linha(df):
-    df_grouped = df.groupby('Linha')['Valor_Total_Item'].sum().reset_index()
-    total_vendas = df_grouped['Valor_Total_Item'].sum()
-    df_grouped['Porcentagem'] = (df_grouped['Valor_Total_Item'] / total_vendas) * 100
-    df_grouped = df_grouped.sort_values(by='Valor_Total_Item', ascending=False)
+# def criar_grafico_barras_vendas_linha(df):
+#     df_grouped = df.groupby('Linha')['Valor_Total_Item'].sum().reset_index()
+#     total_vendas = df_grouped['Valor_Total_Item'].sum()
+#     df_grouped['Porcentagem'] = (df_grouped['Valor_Total_Item'] / total_vendas) * 100
+#     df_grouped = df_grouped.sort_values(by='Valor_Total_Item', ascending=False)
 
-    fig = px.bar(df_grouped, x='Linha', y='Valor_Total_Item',
-                 title='Participação de Vendas por Linha de Produto',
-                 hover_data=['Valor_Total_Item', 'Porcentagem'],
-                 text='Porcentagem')
+#     fig = px.bar(df_grouped, x='Linha', y='Valor_Total_Item',
+#                  title='Participação de Vendas por Linha de Produto',
+#                  hover_data=['Valor_Total_Item', 'Porcentagem'],
+#                  text='Porcentagem')
 
-    fig.update_traces(
-        texttemplate='%{text:.2f}%',
-        textposition='outside',
-        textfont_size=32
-    )
+#     fig.update_traces(
+#         texttemplate='%{text:.2f}%',
+#         textposition='outside',
+#         textfont_size=32
+#     )
 
-    fig.update_layout(
-        height=1100,
-        width=700,
-        showlegend=False,
-        title_font=dict(size=40, family="Times New Roman"),
-        xaxis_title='Linha de Produto',
-        yaxis_title='Valor Total de Vendas',
-        yaxis=dict(tickformat=',.2f'),
-        xaxis=dict(
-            tickfont=dict(size=32)
-        )
-    )
-    return fig
+#     fig.update_layout(
+#         height=1100,
+#         width=700,
+#         showlegend=False,
+#         title_font=dict(size=40, family="Times New Roman"),
+#         xaxis_title='Linha de Produto',
+#         yaxis_title='Valor Total de Vendas',
+#         yaxis=dict(tickformat=',.2f'),
+#         xaxis=dict(
+#             tickfont=dict(size=32)
+#         )
+#     )
+#     return fig
 
 
 def calcular_performance_vendedores(df_vendas):
@@ -443,7 +443,7 @@ def renderizar_pagina_vendas(df):
         fig_performance,
         exibir_grafico_ticket_medio(df_ticket_medio),
         criar_grafico_barras(produtos_mais_vendidos(df_filtrado), 'Descricao_produto', 'Valor_Total_Item', 'Top 10 Produtos Mais Vendidos', {'Descricao_produto': 'Produto', 'Valor_Total_Item': 'Valor Total de Venda'}),
-        criar_grafico_barras_vendas_linha(df_filtrado),
+        #criar_grafico_barras_vendas_linha(df_filtrado),
         fig_ranking
         
     ]
