@@ -20,11 +20,12 @@ MESES_ABREVIADOS = {
 #Rafael passa todo mês
 METAS_VENDEDORES = {
     "VERIDIANA SERRA": 500000.00,
-    "CESAR GAMA": 600000.00,
+    "CESAR GAMA": 500000.00,
     "FABIAN SILVA": 450000.00,
     "DENIS SOUSA": 950000.00,
-    "THIAGO SOUSA": 500000.00,
+    "THIAGO SOUSA": 600000.00,
     "JOECIA": 100000.00,
+    "JULIANA": 100000.00,
     "NATALIA SILVA": 400000.00
 }
 
@@ -220,7 +221,7 @@ def processar_dados_ticket_medio(df):
 
     ano_atual = datetime.datetime.now().year
     mes_atual = datetime.datetime.now().month
-    mes_atual = mes_atual - 1
+    # mes_atual = mes_atual - 1 #Radanmes Mes anterior
 
     df_nf_unicas = aplicar_filtros(df_nf_unicas, mes=mes_atual, ano=ano_atual)
     
@@ -318,7 +319,7 @@ def criar_grafico_performance_vendedores(df_performance):
 def renderizar_pagina_vendas(df):
     ano_atual = datetime.datetime.now().year
     mes_atual = datetime.datetime.now().month
-    mes_atual = mes_atual - 1
+    # mes_atual = mes_atual - 1 #Radanmes Mes anterior
 
     df_filtrado = aplicar_filtros(df, mes=mes_atual, ano=ano_atual)
 
