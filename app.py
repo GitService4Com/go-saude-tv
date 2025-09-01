@@ -219,7 +219,8 @@ def processar_dados_ticket_medio(df):
     df_nf_unicas = df_nf_unicas[df_nf_unicas['situacao'] == 'Faturada']
 
     ano_atual = datetime.datetime.now().year
-    mes_atual = datetime.datetime.now().month -1
+    mes_atual = datetime.datetime.now().month
+    mes_atual = mes_atual - datetime.timedelta(days=1)
 
     df_nf_unicas = aplicar_filtros(df_nf_unicas, mes=mes_atual, ano=ano_atual)
     
