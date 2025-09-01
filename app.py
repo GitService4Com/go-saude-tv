@@ -318,6 +318,7 @@ def criar_grafico_performance_vendedores(df_performance):
 def renderizar_pagina_vendas(df):
     ano_atual = datetime.datetime.now().year
     mes_atual = datetime.datetime.now().month
+    mes_atual = mes_atual - datetime.timedelta(days=1)
 
     df_filtrado = aplicar_filtros(df, mes=mes_atual, ano=ano_atual)
 
