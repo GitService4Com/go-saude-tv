@@ -17,13 +17,14 @@ MESES_ABREVIADOS = {
     7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
 }
 
+#Rafael passa todo mês
 METAS_VENDEDORES = {
     "VERIDIANA SERRA": 500000.00,
-    "CESAR GAMA": 500000.00,
-    "FABIAN SILVA": 420000.00,
-    "DENIS SOUSA": 910000.00,
-    "THIAGO SOUSA": 650000.00,
-    "JOECIA": 120000.00,
+    "CESAR GAMA": 600000.00,
+    "FABIAN SILVA": 450000.00,
+    "DENIS SOUSA": 950000.00,
+    "THIAGO SOUSA": 500000.00,
+    "JOECIA": 100000.00,
     "NATALIA SILVA": 400000.00
 }
 
@@ -55,11 +56,10 @@ def calcular_metricas(df):
     total_qtd_produto = df['Qtd_Produto'].sum()
     valor_total_item = df['Valor_Total_Item'].sum()
     total_custo_compra = df['Total_Custo_Compra'].sum()
-    total_lucro_venda_absoluto = df['Total_Lucro_Venda_Item'].sum() # Mantemos o valor absoluto para referência
+    total_lucro_venda_absoluto = df['Total_Lucro_Venda_Item'].sum() 
 
     ticket_medio_geral = valor_total_item / total_nf if total_nf > 0 else 0
 
-    # Calcular a porcentagem do lucro de venda em relação ao valor total dos itens
     porcentagem_lucro_venda = (total_lucro_venda_absoluto / valor_total_item) * 100 if valor_total_item > 0 else 0
 
     return total_nf, total_qtd_produto, valor_total_item, total_custo_compra, total_lucro_venda_absoluto, ticket_medio_geral, porcentagem_lucro_venda
@@ -219,11 +219,10 @@ def processar_dados_ticket_medio(df):
     df_nf_unicas = df_nf_unicas[df_nf_unicas['situacao'] == 'Faturada']
 
     ano_atual = datetime.datetime.now().year
-    mes_atual = datetime.datetime.now().month
+    mes_atual = datetime.datetime.now().month -1
 
     df_nf_unicas = aplicar_filtros(df_nf_unicas, mes=mes_atual, ano=ano_atual)
     
-    # Adicione esta linha para remover Veridiana do cálculo
     df_nf_unicas = df_nf_unicas[df_nf_unicas['Vendedor'] != 'VERIDIANA SERRA']
 
     df_ticket_medio = df_nf_unicas.groupby('Vendedor')['Valor_Total_Nota'].mean().reset_index(name='Ticket_Medio')
@@ -231,45 +230,12 @@ def processar_dados_ticket_medio(df):
     
     return df_ticket_medio
 
-# def criar_grafico_barras_vendas_linha(df):
-#     df_grouped = df.groupby('Linha')['Valor_Total_Item'].sum().reset_index()
-#     total_vendas = df_grouped['Valor_Total_Item'].sum()
-#     df_grouped['Porcentagem'] = (df_grouped['Valor_Total_Item'] / total_vendas) * 100
-#     df_grouped = df_grouped.sort_values(by='Valor_Total_Item', ascending=False)
-
-#     fig = px.bar(df_grouped, x='Linha', y='Valor_Total_Item',
-#                  title='Participação de Vendas por Linha de Produto',
-#                  hover_data=['Valor_Total_Item', 'Porcentagem'],
-#                  text='Porcentagem')
-
-#     fig.update_traces(
-#         texttemplate='%{text:.2f}%',
-#         textposition='outside',
-#         textfont_size=32
-#     )
-
-#     fig.update_layout(
-#         height=1100,
-#         width=700,
-#         showlegend=False,
-#         title_font=dict(size=40, family="Times New Roman"),
-#         xaxis_title='Linha de Produto',
-#         yaxis_title='Valor Total de Vendas',
-#         yaxis=dict(tickformat=',.2f'),
-#         xaxis=dict(
-#             tickfont=dict(size=32)
-#         )
-#     )
-#     return fig
-
-
 def calcular_performance_vendedores(df_vendas):
 
     vendas_por_vendedor_filtrado = df_vendas[
         (df_vendas['Vendedor'] != 'GERAL VENDAS') & (df_vendas['Vendedor'] != 'JORGE TOTE')
     ].copy()
 
-    # Realizar o groupby e os cálculos no DataFrame filtrado
     vendas_por_vendedor = vendas_por_vendedor_filtrado.groupby('Vendedor')['Valor_Total_Item'].sum().reset_index()
     vendas_por_vendedor = vendas_por_vendedor.rename(columns={'Valor_Total_Item': 'Total_Vendido'})
 
@@ -287,7 +253,6 @@ def criar_grafico_performance_vendedores(df_performance):
     max_meta = df_performance['Meta'].max()
     limite_superior_yaxis = max_meta * 1.2
 
-    # Barra de Meta (Background)
     fig.add_trace(go.Bar(
         x=df_performance['Vendedor'],
         y=df_performance['Meta'],
@@ -310,16 +275,16 @@ def criar_grafico_performance_vendedores(df_performance):
         textfont=dict(size=28, color='#000', family="Arial, sans-serif")
     ))
 
-    altura_anotacao = max_meta * 0.05 # 5% da maior meta acima
+    altura_anotacao = max_meta * 0.05
 
     for index, row in df_performance.iterrows():
-        # Condição para verificar se o vendedor passou da meta
+        
         if row['Total_Vendido'] > row['Meta']:
             y_pos_annotation = row['Meta'] + altura_anotacao
-            cor_texto_anotacao = '#ffffff'  # Branco
+            cor_texto_anotacao = '#ffffff' 
         else:
-            y_pos_annotation = row['Total_Vendido'] + (row['Total_Vendido'] * 0.15) # Posição original
-            cor_texto_anotacao = '#000000'  # Preto (original)
+            y_pos_annotation = row['Total_Vendido'] + (row['Total_Vendido'] * 0.15) 
+            cor_texto_anotacao = '#000000'  
 
         fig.add_annotation(
             x=row['Vendedor'],
@@ -338,7 +303,7 @@ def criar_grafico_performance_vendedores(df_performance):
         yaxis_title='Valor (R$)',
         yaxis=dict(tickformat=',.2f'),
         template='plotly_white',
-        barmode='overlay', # sobrepor as barras
+        barmode='overlay', 
         showlegend=True,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         height=1100,
@@ -353,10 +318,8 @@ def renderizar_pagina_vendas(df):
     ano_atual = datetime.datetime.now().year
     mes_atual = datetime.datetime.now().month
 
-    # Aplicar o filtro para o mês e ano atuais
     df_filtrado = aplicar_filtros(df, mes=mes_atual, ano=ano_atual)
 
-    # Verifica se o DataFrame filtrado está vazio
     if df_filtrado.empty:
         st.warning(f"Não há dados de vendas para o mês atual ({MESES_ABREVIADOS[mes_atual]}/{ano_atual}).")
         return
@@ -379,10 +342,10 @@ def renderizar_pagina_vendas(df):
         </div>
         """
 
-    col1, col2, col3, col4, col5, col6 = st.columns([0.3, 1, 1, 1.2, 1.2, 1.2]) # Ajustei as proporções e adicionei uma coluna
+    col1, col2, col3, col4, col5, col6 = st.columns([0.3, 1, 1, 1.2, 1.2, 1.2])
 
     with col1:
-        st.image(CAMINHO_ARQUIVO_IMAGENS, width=150) # Reduzi um pouco a largura da imagem para caber mais colunas
+        st.image(CAMINHO_ARQUIVO_IMAGENS, width=150) 
     with col2:
         st.markdown(card_style("Total de Notas", f"{total_nf}"), unsafe_allow_html=True)
     with col3:
@@ -390,10 +353,9 @@ def renderizar_pagina_vendas(df):
     with col4:
         st.markdown(card_style("Faturamento Total", formatar_moeda(valor_total_item)), unsafe_allow_html=True)
     with col5:
-        st.markdown(card_style("Custo Total", formatar_moeda(total_custo_compra)), unsafe_allow_html=True) # Adicionei o custo total
+        st.markdown(card_style("Custo Total", formatar_moeda(total_custo_compra)), unsafe_allow_html=True) 
     with col6:
-        st.markdown(card_style("Margem Bruta (%)", f"{porcentagem_lucro_venda:.2f}%"), unsafe_allow_html=True) # Nova métrica da porcentagem
-
+        st.markdown(card_style("Margem Bruta (%)", f"{porcentagem_lucro_venda:.2f}%"), unsafe_allow_html=True)
 
     df_ticket_medio = processar_dados_ticket_medio(df_filtrado)
 
@@ -433,7 +395,6 @@ def renderizar_pagina_vendas(df):
 
     )
 
-    # Calcular performance dos vendedores
     df_performance_vendedores = calcular_performance_vendedores(df_filtrado)
     df_performance_vendedores['Vendedor'] = df_performance_vendedores['Vendedor'].replace('THIAGO SOUSA', 'LICITAÇÃO').replace('VERIDIANA SERRA', 'GOMED')
     fig_performance = criar_grafico_performance_vendedores(df_performance_vendedores)
@@ -443,7 +404,6 @@ def renderizar_pagina_vendas(df):
         fig_performance,
         exibir_grafico_ticket_medio(df_ticket_medio),
         criar_grafico_barras(produtos_mais_vendidos(df_filtrado), 'Descricao_produto', 'Valor_Total_Item', 'Top 10 Produtos Mais Vendidos', {'Descricao_produto': 'Produto', 'Valor_Total_Item': 'Valor Total de Venda'}),
-        #criar_grafico_barras_vendas_linha(df_filtrado),
         fig_ranking
         
     ]
@@ -453,7 +413,7 @@ def renderizar_pagina_vendas(df):
 
     st.plotly_chart(graphs[st.session_state.graph_index])
 
-    time.sleep(20)
+    time.sleep(10)
 
     st.session_state.graph_index = (st.session_state.graph_index + 1) % len(graphs)
     st.rerun()
