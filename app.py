@@ -220,7 +220,7 @@ def processar_dados_ticket_medio(df):
 
     ano_atual = datetime.datetime.now().year
     mes_atual = datetime.datetime.now().month
-    mes_atual = mes_atual - datetime.timedelta(days=1)
+    mes_atual = mes_atual - 1
 
     df_nf_unicas = aplicar_filtros(df_nf_unicas, mes=mes_atual, ano=ano_atual)
     
@@ -318,7 +318,7 @@ def criar_grafico_performance_vendedores(df_performance):
 def renderizar_pagina_vendas(df):
     ano_atual = datetime.datetime.now().year
     mes_atual = datetime.datetime.now().month
-    mes_atual = mes_atual - datetime.timedelta(days=1)
+    mes_atual = mes_atual - 1
 
     df_filtrado = aplicar_filtros(df, mes=mes_atual, ano=ano_atual)
 
