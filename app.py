@@ -11,6 +11,7 @@ st.set_page_config(page_title="Go MED SAÚDE", page_icon=":bar_chart:", layout="
 
 # Configurações Globais
 CAMINHO_ARQUIVO_IMAGENS = "go_med_saude.jpeg"
+CAMINHO_ARQUIVO_IMAGENS = CAMINHO_ARQUIVO_IMAGENS.resize((200, 150))  # (largura, altura)
 CAMINHO_ARQUIVO_VENDAS = "df_vendas.csv"
 MESES_ABREVIADOS = {
     1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun',
