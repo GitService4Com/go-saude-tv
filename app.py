@@ -348,7 +348,7 @@ def renderizar_pagina_vendas(df):
     col1, col2, col3, col4, col5, col6 = st.columns([0.3, 1, 1, 1.2, 1.2, 1.2])
 
     with col1:
-        st.image(CAMINHO_ARQUIVO_IMAGENS, height=150, width=200) 
+        st.image(CAMINHO_ARQUIVO_IMAGENS, width=200) 
     with col2:
         st.markdown(card_style("Total de Notas", f"{total_nf}"), unsafe_allow_html=True)
     with col3:
